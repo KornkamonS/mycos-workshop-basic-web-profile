@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Hi-Lo Game</title>
+    <!-- Import Materialize CSS and Font -->
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+    <!-- Link to External CSS -->
+    <link href="styles.css" rel="stylesheet" />
+    <!-- Import Materialize JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>Hi-Lo Game</h1>
+      <h5>Predict the sum of 3 dice rolls</h5>
+      <div class="input-field inline bet-input">
+        <input type="number" id="betAmount" min="1" required />
+        <label for="betAmount">Place your money amount to bet</label>
+      </div>
+      <br /><br />
+      <div>
+        <button
+          id="highBet"
+          class="btn waves-effect waves-light bet-button"
+          onclick="setBetType('high')"
+        >
+          High
+          <br />
+          (>= 12)
+        </button>
+        <button
+          id="midBet"
+          class="btn waves-effect waves-light bet-button"
+          onclick="setBetType('mid')"
+        >
+          Mid
+          <br />
+          (11)
+        </button>
+        <button
+          id="lowBet"
+          class="btn waves-effect waves-light bet-button"
+          onclick="setBetType('low')"
+        >
+          Low
+          <br />
+          (<= 10)
+        </button>
+      </div>
+      <br /><br />
+      <button
+        id="rollButton"
+        class="btn-large waves-effect waves-light"
+        onclick="rollDice()"
+      >
+        Roll Dice
+      </button>
+
+      <button
+        id="retryButton"
+        class="btn-large waves-effect waves-light retry-button"
+        onclick="resetGame()"
+        style="display: none"
+      >
+        Retry
+      </button>
+      <br /><br />
+      <div class="dice" id="diceResult"></div>
+      <div class="payout" id="payout"></div>
+      <div class="result" id="resultMessage"></div>
+      <div class="confetti-container" id="confetti-container"></div>
+    </div>
+
+    <script>
+      let selectedBetType = "";
+
+      function randomDiceNumber() {
+        return Math.floor(Math.random() * 6) + 1;
+      }
+      function setBetType(betType) {
+        selectedBetType = betType;
+        updateButtonColors();
+      }
+
+      function updateButtonColors() {
+        document
+          .getElementById("highBet")
+          .classList.toggle("selected", selectedBetType === "high");
+        document
+          .getElementById("midBet")
+          .classList.toggle("selected", selectedBetType === "mid");
+        document
+          .getElementById("lowBet")
+          .classList.toggle("selected", selectedBetType === "low");
+        document.getElementById("highBet").classList.remove("highlight");
+        document.getElementById("midBet").classList.remove("highlight");
+        document.getElementById("lowBet").classList.remove("highlight");
+      }
+
+      function stopConfetti() {
+        const confettiContainer = document.getElementById("confetti-container");
+        confettiContainer.innerHTML = "";
+      }
+
+      function resetGame() {
+        selectedBetType = "";
+        document.getElementById("betAmount").disabled = false;
+        document.getElementById("betAmount").value = "";
+        document.getElementById("diceResult").innerHTML = "";
+        document.getElementById("resultMessage").innerHTML = "";
+        document.getElementById("rollButton").style.display = "inline-block";
+        document.getElementById("retryButton").style.display = "none";
+        document.getElementById("betAmount").classList.remove("highlight");
+        updateButtonColors();
+        stopConfetti();
+      }
+      function showConfetti() {
+        const confettiContainer = document.getElementById("confetti-container");
+        confettiContainer.innerHTML = "";
+        for (let i = 0; i < 100; i++) {
+          const confetti = document.createElement("div");
+          confetti.classList.add("confetti");
+          confetti.style.backgroundColor =
+            "#" + Math.floor(Math.random() * 16777215).toString(16);
+          confetti.style.top = Math.random() * window.innerHeight + "px";
+          confetti.style.left = Math.random() * window.innerWidth + "px";
+          confettiContainer.appendChild(confetti);
+        }
+        setTimeout(() => {
+          confettiContainer.innerHTML = "";
+        }, 3000);
+      }
+
+      function rollDice() {
+        stopConfetti(); // Stop confetti when rolling dice
+
+        let betAmount = parseFloat(document.getElementById("betAmount").value);
+        if (!betAmount) {
+          M.toast({ html: "Please enter a bet amount!" });
+          document.getElementById("betAmount").classList.add("highlight");
+          return;
+        }
+
+        if (!selectedBetType) {
+          M.toast({ html: "Please select a bet type first!" });
+          document.getElementById("highBet").classList.add("highlight");
+          document.getElementById("midBet").classList.add("highlight");
+          document.getElementById("lowBet").classList.add("highlight");
+          return;
+        }
+
+        let dice1 = randomDiceNumber();
+        let dice2 = randomDiceNumber();
+        let dice3 = randomDiceNumber();
+        let sum = dice1 + dice2 + dice3;
+
+        document.getElementById(
+          "diceResult"
+        ).innerHTML = `🎲 ${dice1} 🎲 ${dice2} 🎲 ${dice3}`;
+        let resultMessage = "";
+        let sumMessage = `<span>Sum is ${sum}</span>`;
+        if (
+          (selectedBetType === "high" && sum >= 12) ||
+          (selectedBetType === "low" && sum <= 10)
+        ) {
+          resultMessage = `<span class="win">You won! Payout: ${
+            betAmount * 2
+          }</span>`;
+          showConfetti();
+        } else if (selectedBetType === "mid" && sum === 11) {
+          resultMessage = `<span class="mid">You won! Payout: ${
+            betAmount * 5
+          }</span>`;
+          showConfetti();
+        } else {
+          resultMessage = `<span class="lose">You lost.</span>`;
+        }
+
+        document.getElementById("payout").innerHTML = sumMessage;
+        document.getElementById("resultMessage").innerHTML = resultMessage;
+        document.getElementById("betAmount").disabled = true;
+        document.getElementById("rollButton").style.display = "none"; // Disable roll button
+        document.getElementById("retryButton").style.display = "inline-block"; // Show retry button
+      }
+    </script>
+  </body>
+</html>
